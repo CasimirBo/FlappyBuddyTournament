@@ -1,0 +1,45 @@
+{
+    "start_time": "2025-03-28-23-22-03",
+    "play_scores": [
+        {
+            "score": 1443,
+            "player_state": "died"
+        },
+        {
+            "score": 4009,
+            "player_state": "died"
+        },
+        {
+            "score": 4949,
+            "player_state": "finished"
+        },
+        {
+            "score": 851,
+            "player_state": "died"
+        },
+        {
+            "score": 6552,
+            "player_state": "died"
+        },
+        {
+            "score": 1444,
+            "player_state": "died"
+        },
+        {
+            "score": 607,
+            "player_state": "died"
+        },
+        {
+            "score": 5753,
+            "player_state": "died"
+        },
+        {
+            "score": 6869,
+            "player_state": "finished"
+        },
+        {
+            "score": 4829,
+            "player_state": "finished"
+        }
+    ]
+}
