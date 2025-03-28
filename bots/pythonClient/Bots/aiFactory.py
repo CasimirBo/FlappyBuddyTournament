@@ -1,12 +1,14 @@
 from Bots.bot_ai import BotAI
 from Bots.first_ai import FirstAI
-from Bots.my_ai import MyAI
+from Bots.up_ai import UpAI
+from Bots.down_ai import DownAI
 
 ai_bots = {
     "FirstAI": FirstAI,
-    "MyAI": MyAI,
+    "UpAI": UpAI,
+    "DownAI": DownAI,
 }
 
 
-def ai_factory(bot_selection="MyAI") -> BotAI:
+def ai_factory(bot_selection="FirstAI") -> BotAI:
     return ai_bots[bot_selection]()

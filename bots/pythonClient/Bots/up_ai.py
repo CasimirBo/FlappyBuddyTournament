@@ -2,11 +2,12 @@ from Bots.bot_ai import BotAI
 from Bots.data import PlayState
 
 
-class MyAI(BotAI):
+class UpAI(BotAI):
     fly = True
 
-    def play(self, current_game_state: PlayState):
-        # todo: put your logic code here
+    def _play_impl(self, current_game_state: PlayState):
+
+        self.fly = True
         return self.fly
 
     def get_name(self):
@@ -14,4 +15,4 @@ class MyAI(BotAI):
 
     def __init__(self):
         # todo: give your bot a super duper cool name
-        self.name = "YourBotName"
+        self.name = "AlwaysUp"
