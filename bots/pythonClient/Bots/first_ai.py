@@ -5,7 +5,8 @@ from Bots.data import PlayState
 class FirstAI(BotAI):
     fly = True
 
-    def play(self, current_game_state: PlayState):
+    def _play_impl(self, current_game_state: PlayState):
+
         if current_game_state.player.pos_y > 450:
             self.fly = True
 
