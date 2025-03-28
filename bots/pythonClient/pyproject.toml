@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "bots"
+version = "0.1.0"
+description = "Flappy Buddy Bot"
+authors = ["Casimir"]
+
+[tool.poetry.dependencies]
+python = "^3.10.4"
+requests = "^2.31.0"
+matplotlib = "^3.10.1"
+pandas = "^2.2.3"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.4"
+asyncio = "*"
+websockets = "*"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
