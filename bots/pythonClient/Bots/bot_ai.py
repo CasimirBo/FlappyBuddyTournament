@@ -29,9 +29,13 @@ class BotAI(ABC):
         print(current_game_state.player.state)
 
         # Handle end of game states
-        if current_game_state.player.state == "finished" or current_game_state.player.state == "died":
+        if current_game_state.player.state == "finished":
             print(f"Level finished. Score of {current_game_state.score} was added to list.")
             self.play_scores.append({"score":current_game_state.score,"player_state":current_game_state.player.state})
+            self.dump_scores_to_json()
+        if current_game_state.player.state == "died":
+            print(f"Level finished. Score of {0} was added to list.")
+            self.play_scores.append({"score":0,"player_state":current_game_state.player.state})
             self.dump_scores_to_json()
 
 
