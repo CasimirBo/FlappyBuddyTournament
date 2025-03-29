@@ -18,6 +18,10 @@ class ForceAI(BotAI):
     _debug_viz_border_force = None
     _debug_viz_obstacle_force = None
 
+    obstacles_force_inf_position_scatter = pg.ScatterPlotItem(pen=None, symbol='x', size=20, brush='#FF0000FF')
+    BotAI.plot.addItem(obstacles_force_inf_position_scatter)
+    BotAI.legend.addItem(obstacles_force_inf_position_scatter, "Obstacles with force influance")
+
     def _update_line(self, line_obj, start, direction):
 
         x0, y0 = start
@@ -56,13 +60,29 @@ class ForceAI(BotAI):
         return border_force	
 
     def _calc_obstacle_force(self, current_game_state: PlayState):
+
+        obstacles_with_force_influance = [] # for debug
+
         obstacle_positions = []
         obstacle_forces = []
     
         for obstacle in current_game_state.obstacles:
             if obstacle.type == "Seagull" or obstacle.type == "Raven":
-                obstacle_forces.append(np.array([self.xlimit/(current_game_state.player.pos_x-obstacle.origin_x),self.ylimit/(current_game_state.player.pos_y-obstacle.origin_y)]))
-                obstacle_positions.append(np.array([(obstacle.origin_x),(obstacle.origin_y)]))
+                x_diff = current_game_state.player.pos_x-obstacle.origin_x
+                y_diff = current_game_state.player.pos_y-obstacle.origin_y
+                if (x_diff) < 30: # we do not take anything into account, that we passed already
+                    obstacles_with_force_influance.append({'pos': (obstacle.origin_x, obstacle.origin_y)}) # for debug
+                    if x_diff == 0 and y_diff == 0:
+                        obstacle_forces.append(np.array([0,0]))
+                    elif x_diff == 0:
+                        obstacle_forces.append(np.array([0,self.ylimit/y_diff]))
+                    elif y_diff == 0:
+                        obstacle_forces.append(np.array([self.xlimit/x_diff, 0]))
+                    else:
+                        obstacle_forces.append(np.array([self.xlimit/x_diff,self.ylimit/y_diff]))
+                    obstacle_positions.append(np.array([(obstacle.origin_x),(obstacle.origin_y)]))
+
+        self.obstacles_force_inf_position_scatter.setData(obstacles_with_force_influance)
 
         if obstacle_forces:  # Ensure the list is not empty
             obstacle_force = np.median(np.array(obstacle_forces), axis=0)
@@ -83,16 +103,20 @@ class ForceAI(BotAI):
         obstacle_force = self._calc_obstacle_force(current_game_state)
         
         # Combine forces 
-        baorder_factor = 1
+        baorder_factor = 2
         obstacle_factor = 1
         force = baorder_factor*border_force + obstacle_factor*obstacle_force
 
-
+        decision = baorder_factor*border_force[1] + obstacle_factor*obstacle_force[1]*abs(obstacle_force[0])
         # Debug forces
-        print(f"CombinedForce: {force} | Border: {border_force} | Obstacle: {obstacle_force}")
+        print(f"Decision {decision} | CombinedForce: {force} | Border: {border_force} | Obstacle: {obstacle_force}")
+
+
+
+        
 
         # Derive fly from force
-        if force[1] > 0:
+        if decision > 0:
             self.fly = False
         else:
             self.fly = True
