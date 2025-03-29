@@ -1,11 +1,17 @@
 import asyncio
 import json
 import sys
+import optuna
+import time
+
 
 import websockets
 
 from Bots.aiFactory import ai_factory
 from Bots.data import PlayState
+
+import Bots.bot_ai
+import Bots.force_ai
 
 
 async def handle_message(bot, websocket):
@@ -23,15 +29,18 @@ async def client(bot, port):
     uri = f"ws://localhost:{port}/{bot.get_name()}"
     async with websockets.connect(uri, ping_timeout=None, ping_interval=None) as websocket:
         print("Connected to server.")
+
         while True:
             try:
                 await handle_message(bot, websocket)
+
             except websockets.ConnectionClosedOK:
                 print("Connection closed by server.")
                 break
             except websockets.ConnectionClosedError:
                 print("Server was shut down.")
                 break
+
 
 
 if __name__ == "__main__":
@@ -44,3 +53,7 @@ if __name__ == "__main__":
         used_port = sys.argv[2]
 
     asyncio.run(client(ai_bot, used_port))
+
+
+
+

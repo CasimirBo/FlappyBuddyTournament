@@ -12,6 +12,9 @@ pandas = "^2.2.3"
 numpy = "^2.2.4"
 pyqtgraph = "^0.13.7"
 pyqt6 = "^6.8.1"
+scipy = "^1.15.2"
+optuna = "^4.2.1"
+optuna-dashboard = "^0.18.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4"

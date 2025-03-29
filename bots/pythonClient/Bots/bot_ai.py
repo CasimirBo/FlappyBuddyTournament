@@ -9,7 +9,10 @@ import pyqtgraph as pg
 
 from Bots.data import PlayState
 
+
+
 class BotAI(ABC):
+    last_score = 0
 
     name = "BotAI"
     play_scores = []
@@ -45,7 +48,7 @@ class BotAI(ABC):
 
     
 
-    def dump_scores_to_json(self):
+    def dump_scores_to_json(self, current_score):
         data = {
             "start_time": self.start_time,
             "play_scores": self.play_scores
@@ -55,6 +58,10 @@ class BotAI(ABC):
         os.makedirs(directory, exist_ok=True)  # Create the directory if it doesn't exist
         
         with open(f"{directory}/play_scores_{self.start_time}.json", "w") as json_file:
+            json.dump(data, json_file, indent=4)
+
+        data = {"play_scores": current_score}
+        with open(f"current_Score.json", "w") as json_file:
             json.dump(data, json_file, indent=4)
 
     def visualize_positions(self, current_game_state: PlayState):
@@ -73,8 +80,6 @@ class BotAI(ABC):
                 seagull.append({'pos': (obstacle.origin_x, obstacle.origin_y)})
             elif obstacle.type == "Raven":
                 raven.append({'pos': (obstacle.origin_x, obstacle.origin_y)})
-            else:
-                print(obstacle.type)
 
         self.coin_position_scatter.setData(coins)
         self.seagull_position_scatter.setData(seagull)
@@ -88,11 +93,11 @@ class BotAI(ABC):
         if current_game_state.player.state == "finished":
             print(f"Level finished. Score of {current_game_state.score} was added to list.")
             self.play_scores.append({"score":current_game_state.score,"player_state":current_game_state.player.state})
-            self.dump_scores_to_json()
+            self.dump_scores_to_json(current_game_state.score)
         if current_game_state.player.state == "died":
             print(f"Level finished. Score of {0} was added to list.")
             self.play_scores.append({"score":0,"player_state":current_game_state.player.state})
-            self.dump_scores_to_json()
+            self.dump_scores_to_json(current_game_state.score)
 
         # Call the specific implementation of play
         fly = self._play_impl(current_game_state)

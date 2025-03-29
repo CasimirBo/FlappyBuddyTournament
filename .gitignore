@@ -14,3 +14,4 @@ dist/
 game/Flappy Buddy/Flappy Buddy.exe
 bots/pythonClient/poetry.lock
 bots/pythonClient/data
+bots/pythonClient/Bots/bot_ai.py

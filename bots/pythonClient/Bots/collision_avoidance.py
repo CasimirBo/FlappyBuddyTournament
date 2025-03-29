@@ -16,7 +16,7 @@ class ColAvoidAI(BotAI):
 
     def _play_impl(self, current_game_state: PlayState):
 
-        print(f"Player Position: ({current_game_state.player.pos_x}|{current_game_state.player.pos_y})")
+        #print(f"Player Position: ({current_game_state.player.pos_x}|{current_game_state.player.pos_y})")
         
         nearest_coin = None
 
@@ -59,7 +59,7 @@ class ColAvoidAI(BotAI):
         if nearest_obstacle is not None: # even better avaoid obstacle if there is one
 
             if (nearest_obstacle.origin_x - current_game_state.player.pos_x) < 350: # only avoid if it is close
-                print(abs(nearest_obstacle.origin_y - current_game_state.player.pos_y))
+                #print(abs(nearest_obstacle.origin_y - current_game_state.player.pos_y))
                 if abs(nearest_obstacle.origin_y - current_game_state.player.pos_y) < (nearest_obstacle.height + current_game_state.player.height)*4: # only avoid if it is close
                     if nearest_obstacle.origin_y < current_game_state.player.pos_y:
                         self.fly = False

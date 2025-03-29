@@ -1,13 +1,21 @@
 
 import pyqtgraph as pg
 import numpy as np
+import json
 
 from Bots.bot_ai import BotAI
 from Bots.data import PlayState
 
+# gloabl parameters to optimize
+force_baorder_factor = 2
+force_obstacle_factor = 1
+force_coin_factor = 0.2
+
+
 
 
 class ForceAI(BotAI):
+
     fly = True
 
     ylimit = 768
@@ -17,11 +25,18 @@ class ForceAI(BotAI):
     _debug_viz_lower_force = None
     _debug_viz_border_force = None
     _debug_viz_obstacle_force = None
+    _debug_viz_coin_force = None
 
     obstacles_force_inf_position_scatter = pg.ScatterPlotItem(pen=None, symbol='x', size=20, brush='#FF0000FF')
     BotAI.plot.addItem(obstacles_force_inf_position_scatter)
     BotAI.legend.addItem(obstacles_force_inf_position_scatter, "Obstacles with force influance")
 
+    coins_force_inf_position_scatter = pg.ScatterPlotItem(pen=None, symbol='x', size=20, brush='#FFF347FF')
+    BotAI.plot.addItem(coins_force_inf_position_scatter)
+    BotAI.legend.addItem(coins_force_inf_position_scatter, "Coins with force influance")
+
+
+    
     def _update_line(self, line_obj, start, direction):
 
         x0, y0 = start
@@ -95,21 +110,55 @@ class ForceAI(BotAI):
 
         return obstacle_force	
 
+
+    def _calc_coin_force(self, current_game_state: PlayState):
+
+        coins_with_force_influance = [] # for debug
+
+        coin_positions = []
+        coin_forces = []
     
-    def _suggest_fly(self, current_game_state: PlayState):
+        for obstacle in current_game_state.obstacles:
+            if obstacle.type == "Coin":
+                x_diff = current_game_state.player.pos_x-obstacle.origin_x
+                y_diff = current_game_state.player.pos_y-obstacle.origin_y
+                if ((x_diff) < 30 ): # we do not take anything into account, that we passed already
+                    coins_with_force_influance.append({'pos': (obstacle.origin_x, obstacle.origin_y)}) # for debug
+                    if x_diff == 0 and y_diff == 0:
+                        coin_forces.append(np.array([0,0]))
+                    elif x_diff == 0:
+                        coin_forces.append(np.array([0,self.ylimit/y_diff]))
+                    elif y_diff == 0:
+                        coin_forces.append(np.array([self.xlimit/x_diff, 0]))
+                    else:
+                        coin_forces.append(np.array([self.xlimit/x_diff,self.ylimit/y_diff]))
+                    coin_positions.append(np.array([(obstacle.origin_x),(obstacle.origin_y)]))
+
+        self.coins_force_inf_position_scatter.setData(coins_with_force_influance)
+
+        if coin_forces:  # Ensure the list is not empty
+            coin_force = np.median(np.array(coin_forces), axis=0)
+            coin_position = np.median(np.array(coin_positions), axis=0)
+        else:
+            coin_force = np.array([0, 0])  # Fallback if list is empty
+            coin_position = np.array([0, 0])  # Fallback if list is empty
+
+        self._debug_viz_coin_force = self._update_line(self._debug_viz_coin_force, (coin_position[0],coin_position[1]), coin_force)     #obstacle force
+
+        return coin_force	
+    
+    def _suggest_fly(self, current_game_state: PlayState, baorder_factor, obstacle_factor, coin_factor):
         
         # Calculate forces
         border_force = self._calc_border_force(current_game_state)
         obstacle_force = self._calc_obstacle_force(current_game_state)
+        coin_force = self._calc_coin_force(current_game_state)
         
-        # Combine forces 
-        baorder_factor = 2
-        obstacle_factor = 1
-        force = baorder_factor*border_force + obstacle_factor*obstacle_force
 
-        decision = baorder_factor*border_force[1] + obstacle_factor*obstacle_force[1]*abs(obstacle_force[0])
+
+        decision = baorder_factor*border_force[1] + obstacle_factor*obstacle_force[1]*abs(obstacle_force[0] - coin_factor*coin_force[1]*abs(coin_force[0]))
         # Debug forces
-        print(f"Decision {decision} | CombinedForce: {force} | Border: {border_force} | Obstacle: {obstacle_force}")
+        #print(f"Decision {decision} | CombinedForce: {force} | Border: {border_force} | Obstacle: {obstacle_force} | Coin: {coin_force}")
 
 
 
@@ -123,11 +172,20 @@ class ForceAI(BotAI):
 
 
     def _play_impl(self, current_game_state: PlayState):
+  
+        with open("./force_params.json", "r") as json_file:
+            data = json.load(json_file)
+            force_baorder_factor = data.get("force_baorder_factor", 0.1)
+            force_obstacle_factor = data.get("force_obstacle_factor", 0.0)
+            force_coin_factor = data.get("force_coin_factor", 0.0)
 
-        
-        self._suggest_fly(current_game_state)
+        force_baorder_factor
+        force_obstacle_factor
+        force_coin_factor
 
-        
+        self._suggest_fly(current_game_state, force_baorder_factor, force_obstacle_factor, force_coin_factor)
+
+
         return self.fly
 
     def get_name(self):
