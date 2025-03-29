@@ -1,9 +1,18 @@
 from Bots.bot_ai import BotAI
 from Bots.data import PlayState
 
+import pyqtgraph as pg
 
 class ColAvoidAI(BotAI):
     fly = True
+
+    nearest_coin_scatter = pg.ScatterPlotItem(pen=None, symbol='d', size=20, brush='w')
+    BotAI.plot.addItem(nearest_coin_scatter)
+    BotAI.legend.addItem(nearest_coin_scatter, "Nearest Coin")
+
+    nearest_obstacle_scatter = pg.ScatterPlotItem(pen=None, symbol='x', size=20, brush='#FF0000FF') 
+    BotAI.plot.addItem(nearest_obstacle_scatter)
+    BotAI.legend.addItem(nearest_obstacle_scatter, "Nearest Obstacle")
 
     def _play_impl(self, current_game_state: PlayState):
 
@@ -44,8 +53,10 @@ class ColAvoidAI(BotAI):
             else:
                 self.fly = False
 
+            # update nearest coin position
+            self.nearest_coin_scatter.setData([{'pos': (nearest_coin.origin_x, nearest_coin.origin_y)}])
+
         if nearest_obstacle is not None: # even better avaoid obstacle if there is one
-            print(f"Nearest Obstacle {nearest_obstacle.type}: ({nearest_obstacle.origin_x}|{nearest_obstacle.origin_y}) ({nearest_obstacle.height})")
 
             if (nearest_obstacle.origin_x - current_game_state.player.pos_x) < 350: # only avoid if it is close
                 print(abs(nearest_obstacle.origin_y - current_game_state.player.pos_y))
@@ -56,6 +67,8 @@ class ColAvoidAI(BotAI):
                         self.fly = True
 
                 nearest_obstacle.width
+
+            self.nearest_obstacle_scatter.setData([{'pos': (nearest_obstacle.origin_x, nearest_obstacle.origin_y)}])
 
         return self.fly
 
