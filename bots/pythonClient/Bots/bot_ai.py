@@ -26,7 +26,6 @@ class BotAI(ABC):
 
     def play(self, current_game_state: PlayState):
         # Shared functionality for all implementations
-        print(current_game_state.player.state)
 
         # Handle end of game states
         if current_game_state.player.state == "finished":

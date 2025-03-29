@@ -13,3 +13,4 @@ node_modules/
 dist/
 game/Flappy Buddy/Flappy Buddy.exe
 bots/pythonClient/poetry.lock
+bots/pythonClient/data
