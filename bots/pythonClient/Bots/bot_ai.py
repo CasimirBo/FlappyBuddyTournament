@@ -48,7 +48,7 @@ class BotAI(ABC):
 
     
 
-    def dump_scores_to_json(self, current_score):
+    def dump_scores_to_json(self, current_score, level_time):
         data = {
             "start_time": self.start_time,
             "play_scores": self.play_scores
@@ -60,7 +60,7 @@ class BotAI(ABC):
         with open(f"{directory}/play_scores_{self.start_time}.json", "w") as json_file:
             json.dump(data, json_file, indent=4)
 
-        data = {"play_scores": current_score}
+        data = {"play_scores": current_score,"play_time":level_time}
         with open(f"current_Score.json", "w") as json_file:
             json.dump(data, json_file, indent=4)
 
@@ -93,11 +93,11 @@ class BotAI(ABC):
         if current_game_state.player.state == "finished":
             print(f"Level finished. Score of {current_game_state.score} was added to list.")
             self.play_scores.append({"score":current_game_state.score,"player_state":current_game_state.player.state})
-            self.dump_scores_to_json(current_game_state.score)
+            self.dump_scores_to_json(current_game_state.score, current_game_state.level_time)
         if current_game_state.player.state == "died":
             print(f"Level finished. Score of {0} was added to list.")
             self.play_scores.append({"score":0,"player_state":current_game_state.player.state})
-            self.dump_scores_to_json(current_game_state.score)
+            self.dump_scores_to_json(current_game_state.score, current_game_state.level_time)
 
         # Call the specific implementation of play
         fly = self._play_impl(current_game_state)

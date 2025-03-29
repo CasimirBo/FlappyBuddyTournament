@@ -6,8 +6,9 @@ from datetime import datetime
 # Define the objective function for Optuna
 def objective(trial):
     # Suggest values for the parameters
-    boarder_factor = trial.suggest_float("boarder_factor", 0.0, 1.0)
-    obstacle_factor = trial.suggest_float("obstacle_factor", 0.0, 2.0)
+    #boarder_factor = trial.suggest_float("boarder_factor", 0.1, 1.0)
+    boarder_factor = 0.5
+    obstacle_factor = trial.suggest_float("obstacle_factor", 0.5, 2.0)
     coin_factor = trial.suggest_float("coin_factor", 0.0, 2.0)
 
     # Set the parameters in the system
@@ -16,15 +17,16 @@ def objective(trial):
         json.dump(data, json_file, indent=4)
 
     # Wait for the system to stabilize (simulate processing time)
-    time.sleep(50)  # Simulate a delay for the system to process changes
+    time.sleep(30)  # Simulate a delay for the system to process changes
 
     # Read in new score 
     with open("./current_Score.json", "r") as json_file:
         data = json.load(json_file)
-        play_scores = data.get("play_scores", 0.1)
+        play_scores = data.get("play_scores", 0)
+        play_time = data.get("play_time", 0)
 
     # Return the negative of the score (since Optuna minimizes by default)
-    return play_scores
+    return play_time
 
 # Create an Optuna study
 start_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")

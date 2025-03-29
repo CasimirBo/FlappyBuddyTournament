@@ -85,7 +85,7 @@ class ForceAI(BotAI):
             if obstacle.type == "Seagull" or obstacle.type == "Raven":
                 x_diff = current_game_state.player.pos_x-obstacle.origin_x
                 y_diff = current_game_state.player.pos_y-obstacle.origin_y
-                if (x_diff) < 30: # we do not take anything into account, that we passed already
+                if (x_diff) < 50: # we do not take anything into account, that we passed already
                     obstacles_with_force_influance.append({'pos': (obstacle.origin_x, obstacle.origin_y)}) # for debug
                     if x_diff == 0 and y_diff == 0:
                         obstacle_forces.append(np.array([0,0]))
@@ -122,17 +122,30 @@ class ForceAI(BotAI):
             if obstacle.type == "Coin":
                 x_diff = current_game_state.player.pos_x-obstacle.origin_x
                 y_diff = current_game_state.player.pos_y-obstacle.origin_y
-                if ((x_diff) < 30 ): # we do not take anything into account, that we passed already
-                    coins_with_force_influance.append({'pos': (obstacle.origin_x, obstacle.origin_y)}) # for debug
-                    if x_diff == 0 and y_diff == 0:
-                        coin_forces.append(np.array([0,0]))
-                    elif x_diff == 0:
-                        coin_forces.append(np.array([0,self.ylimit/y_diff]))
-                    elif y_diff == 0:
-                        coin_forces.append(np.array([self.xlimit/x_diff, 0]))
-                    else:
-                        coin_forces.append(np.array([self.xlimit/x_diff,self.ylimit/y_diff]))
-                    coin_positions.append(np.array([(obstacle.origin_x),(obstacle.origin_y)]))
+
+                if ((x_diff) < 50 ): # we do not take anything into account, that we passed already
+                    if coin_positions == []:
+                        coins_with_force_influance.append({'pos': (obstacle.origin_x, obstacle.origin_y)}) # for debug
+                        if x_diff == 0 and y_diff == 0:
+                            coin_forces.append(np.array([0,0]))
+                        elif x_diff == 0:
+                            coin_forces.append(np.array([0,self.ylimit/y_diff]))
+                        elif y_diff == 0:
+                            coin_forces.append(np.array([self.xlimit/x_diff, 0]))
+                        else:
+                            coin_forces.append( np.array([self.xlimit/x_diff,self.ylimit/y_diff]))
+                        coin_positions.append(np.array([(obstacle.origin_x),(obstacle.origin_y)]))
+                    elif (abs(x_diff)+abs(y_diff))  < (abs(current_game_state.player.pos_x-coin_positions[0][0])+abs(current_game_state.player.pos_y-coin_positions[0][1])) : # we add only hte nearest coin force 
+                        coins_with_force_influance[0] = {'pos': (obstacle.origin_x, obstacle.origin_y)} # for debug
+                        if x_diff == 0 and y_diff == 0:
+                            coin_forces[0] = np.array([0,0])
+                        elif x_diff == 0:
+                            coin_forces[0] = np.array([0,self.ylimit/y_diff])
+                        elif y_diff == 0:
+                            coin_forces[0] = np.array([self.xlimit/x_diff, 0])
+                        else:
+                            coin_forces[0] = np.array([self.xlimit/x_diff,self.ylimit/y_diff])
+                        coin_positions[0] = np.array([(obstacle.origin_x),(obstacle.origin_y)])
 
         self.coins_force_inf_position_scatter.setData(coins_with_force_influance)
 
@@ -154,15 +167,9 @@ class ForceAI(BotAI):
         obstacle_force = self._calc_obstacle_force(current_game_state)
         coin_force = self._calc_coin_force(current_game_state)
         
-
-
-        decision = baorder_factor*border_force[1] + obstacle_factor*obstacle_force[1]*abs(obstacle_force[0] - coin_factor*coin_force[1]*abs(coin_force[0]))
+        decision = (baorder_factor*border_force[1]) + (obstacle_factor*obstacle_force[1]*abs(obstacle_force[0]) - (coin_factor*coin_force[1])) 
         # Debug forces
-        #print(f"Decision {decision} | CombinedForce: {force} | Border: {border_force} | Obstacle: {obstacle_force} | Coin: {coin_force}")
-
-
-
-        
+        #print(f"Decision {decision} | Border: {border_force} | Obstacle: {obstacle_force} | Coin: {coin_force}")
 
         # Derive fly from force
         if decision > 0:
@@ -172,18 +179,18 @@ class ForceAI(BotAI):
 
 
     def _play_impl(self, current_game_state: PlayState):
-  
-        with open("./force_params.json", "r") as json_file:
-            data = json.load(json_file)
-            force_baorder_factor = data.get("force_baorder_factor", 0.1)
-            force_obstacle_factor = data.get("force_obstacle_factor", 0.0)
-            force_coin_factor = data.get("force_coin_factor", 0.0)
+        
+        try:
+            with open("./force_params.json", "r") as json_file:
+                data = json.load(json_file)
+                force_baorder_factor = data.get("force_baorder_factor", 0.1)
+                force_obstacle_factor = data.get("force_obstacle_factor", 0.0)
+                force_coin_factor = data.get("force_coin_factor", 0.0)
 
-        force_baorder_factor
-        force_obstacle_factor
-        force_coin_factor
+            self._suggest_fly(current_game_state, force_baorder_factor, force_obstacle_factor, force_coin_factor)
+        except:
+            print("Skipping fly suggestion")
 
-        self._suggest_fly(current_game_state, force_baorder_factor, force_obstacle_factor, force_coin_factor)
 
 
         return self.fly
