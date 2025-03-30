@@ -122,7 +122,7 @@ class BotAI(ABC):
         if current_game_state.player.state == "died":
             print(f"Level finished. Score of {0} was added to list.")
             self.play_scores.append({"score":0,"player_state":current_game_state.player.state})
-            self.dump_scores_to_json(current_game_state.score, current_game_state.level_time)
+            self.dump_scores_to_json((current_game_state.score/2), current_game_state.level_time) # we devide the score so there is an negative impac for died
 
         # Call the specific implementation of play
         fly = self._play_impl(current_game_state)

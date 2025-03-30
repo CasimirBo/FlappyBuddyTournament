@@ -24,10 +24,15 @@ class Force2AI(BotAI):
 
     _debug_viz_border_force = None
     _debug_viz_obstacle_force = None
+    _debug_viz_coin_force = None
 
     obstacles_force_inf_position_scatter = pg.ScatterPlotItem(pen=None, symbol='x', size=20, brush='#FF0000FF')
     BotAI.plot.addItem(obstacles_force_inf_position_scatter)
     BotAI.legend.addItem(obstacles_force_inf_position_scatter, "Obstacles with force influance")
+
+    coins_force_inf_position_scatter = pg.ScatterPlotItem(pen=None, symbol='x', size=20, brush='#FFF347FF')
+    BotAI.plot.addItem(coins_force_inf_position_scatter)
+    BotAI.legend.addItem(coins_force_inf_position_scatter, "Coins with force influance")
 
     obstacles_art_obs_position_scatter = pg.ScatterPlotItem(pen=None, symbol='o', size=10, brush='#48F3FFFF')
     BotAI.plot.addItem(obstacles_art_obs_position_scatter)
@@ -130,6 +135,56 @@ class Force2AI(BotAI):
 
         return obstacle_force	
 
+    def _calc_coin_force(self, current_game_state: PlayState):
+
+        coins_with_force_influance = [] # for debug
+
+        coin_positions = []
+        coin_forces = []
+    
+        for obstacle in current_game_state.obstacles:
+            if obstacle.type == "Coin":
+                x_diff = current_game_state.player.pos_x-obstacle.origin_x
+                y_diff = current_game_state.player.pos_y-obstacle.origin_y
+
+                if ((x_diff) < 50 ): # we do not take anything into account, that we passed already
+                    if coin_positions == []:
+                        coins_with_force_influance.append({'pos': (obstacle.origin_x, obstacle.origin_y)}) # for debug
+                        if x_diff == 0 and y_diff == 0:
+                            coin_forces.append(np.array([0,0]))
+                        elif x_diff == 0:
+                            coin_forces.append(np.array([0,self.ylimit/y_diff]))
+                        elif y_diff == 0:
+                            coin_forces.append(np.array([self.xlimit/x_diff, 0]))
+                        else:
+                            coin_forces.append( np.array([self.xlimit/x_diff,self.ylimit/y_diff]))
+                        coin_positions.append(np.array([(obstacle.origin_x),(obstacle.origin_y)]))
+                    elif (abs(x_diff)+abs(y_diff))  < (abs(current_game_state.player.pos_x-coin_positions[0][0])+abs(current_game_state.player.pos_y-coin_positions[0][1])) : # we add only hte nearest coin force 
+                        coins_with_force_influance[0] = {'pos': (obstacle.origin_x, obstacle.origin_y)} # for debug
+                        if x_diff == 0 and y_diff == 0:
+                            coin_forces[0] = np.array([0,0])
+                        elif x_diff == 0:
+                            coin_forces[0] = np.array([0,self.ylimit/y_diff])
+                        elif y_diff == 0:
+                            coin_forces[0] = np.array([self.xlimit/x_diff, 0])
+                        else:
+                            coin_forces[0] = np.array([self.xlimit/x_diff,self.ylimit/y_diff])
+                        coin_positions[0] = np.array([(obstacle.origin_x),(obstacle.origin_y)])
+
+        self.coins_force_inf_position_scatter.setData(coins_with_force_influance)
+
+        if coin_forces:  # Ensure the list is not empty
+            coin_force = np.median(np.array(coin_forces), axis=0)
+            coin_position = np.median(np.array(coin_positions), axis=0)
+        else:
+            coin_force = np.array([0, 0])  # Fallback if list is empty
+            coin_position = np.array([0, 0])  # Fallback if list is empty
+
+        self._debug_viz_coin_force = self._update_line(self._debug_viz_coin_force, (coin_position[0],coin_position[1]), coin_force)     #obstacle force
+
+        return coin_force	
+
+
     def _add_artifica_obstacles(self, current_game_state: PlayState):
         
         artificials = []
@@ -138,29 +193,9 @@ class Force2AI(BotAI):
         for obstacle in current_game_state.obstacles[:]:
             if obstacle.type == "Seagull" or obstacle.type == "Raven":
                 
-                ## add the arrow
-                ## up
-                #obstacle_up = copy.deepcopy(obstacle)
-                #obstacle_up.origin_y = obstacle_up.origin_y + (obstacle_up.height/2)
-                #obstacle_up.origin_x = obstacle_up.origin_x + (obstacle_up.width/2)
-                #current_game_state.obstacles.append(obstacle_up)
-                #artificials.append({'pos': (obstacle_up.origin_x, obstacle_up.origin_y)}) # viz
-                ## low
-                #obstacle_low = copy.deepcopy(obstacle)
-                #obstacle_low.origin_y = obstacle_low.origin_y - (obstacle_low.height/2)
-                #obstacle_low.origin_x = obstacle_low.origin_x + (obstacle_low.width/2)
-                #current_game_state.obstacles.append(obstacle_low)
-                #artificials.append({'pos': (obstacle_low.origin_x, obstacle_low.origin_y)}) # viz
-
                 # boarder artificals
                 #print(obstacle.origin_y)
                 if obstacle.origin_y > 410:
-                    ## frontal1
-                    #obstacle_f1 = copy.deepcopy(obstacle)
-                    #obstacle_f1.origin_y = obstacle_f1.origin_y + (obstacle_f1.height)
-                    #obstacle_f1.origin_x = obstacle_f1.origin_x - (obstacle_f1.width/2)
-                    #current_game_state.obstacles.append(obstacle_f1)
-                    #artificials.append({'pos': (obstacle_f1.origin_x, obstacle_f1.origin_y)}) # viz
 
                     # frontal2
                     obstacle_f2 = copy.deepcopy(obstacle)
@@ -168,13 +203,6 @@ class Force2AI(BotAI):
                     obstacle_f2.origin_x = obstacle_f2.origin_x - (obstacle_f2.width*1.5)
                     current_game_state.obstacles.append(obstacle_f2)
                     artificials.append({'pos': (obstacle_f2.origin_x, obstacle_f2.origin_y)}) # viz
-
-                    ## frontal3
-                    #obstacle_f3 = copy.deepcopy(obstacle)
-                    #obstacle_f3.origin_y = 550
-                    #obstacle_f3.origin_x = obstacle_f3.origin_x - (obstacle_f3.width*2)
-                    #current_game_state.obstacles.append(obstacle_f3)
-                    #artificials.append({'pos': (obstacle_f3.origin_x, obstacle_f3.origin_y)}) # viz
 
                     # frontal4
                     obstacle_f4 = copy.deepcopy(obstacle)
@@ -185,12 +213,6 @@ class Force2AI(BotAI):
                     
 
                 if obstacle.origin_y < 90:
-                    ## frontal1
-                    #obstacle_f1 = copy.deepcopy(obstacle)
-                    #obstacle_f1.origin_y = obstacle_f1.origin_y - (obstacle_f1.height)
-                    #obstacle_f1.origin_x = obstacle_f1.origin_x - (obstacle_f1.width/2)
-                    #current_game_state.obstacles.append(obstacle_f1)
-                    #artificials.append({'pos': (obstacle_f1.origin_x, obstacle_f1.origin_y)}) # viz
 
                     # frontal2
                     obstacle_f2 = copy.deepcopy(obstacle)
@@ -198,13 +220,6 @@ class Force2AI(BotAI):
                     obstacle_f2.origin_x = obstacle_f2.origin_x - (obstacle_f2.width*1.5)
                     current_game_state.obstacles.append(obstacle_f2)
                     artificials.append({'pos': (obstacle_f2.origin_x, obstacle_f2.origin_y)}) # viz
-
-                    ## frontal3
-                    #obstacle_f3 = copy.deepcopy(obstacle)
-                    #obstacle_f3.origin_y = -85
-                    #obstacle_f3.origin_x = obstacle_f3.origin_x - (obstacle_f3.width*2)
-                    #current_game_state.obstacles.append(obstacle_f3)
-                    #artificials.append({'pos': (obstacle_f3.origin_x, obstacle_f3.origin_y)}) # viz
 
                     # frontal4
                     obstacle_f4 = copy.deepcopy(obstacle)
@@ -225,7 +240,7 @@ class Force2AI(BotAI):
         return current_game_state
     
 
-    def _suggest_fly(self, current_game_state: PlayState, baorder_factor, obstacle_factor, force_position_factor_xy):
+    def _suggest_fly(self, current_game_state: PlayState, baorder_factor, obstacle_factor, coin_factor, force_position_factor_xy):
         
         # Add some artifical Obstacles
         current_game_state = self._add_artifica_obstacles(current_game_state)
@@ -233,8 +248,9 @@ class Force2AI(BotAI):
         # Calculate forces
         border_force = self._calc_border_force(current_game_state)
         obstacle_force = self._calc_obstacle_force(current_game_state, force_position_factor_xy)
+        coin_force = self._calc_coin_force(current_game_state)
 
-        decision = (baorder_factor*border_force[1]) + (obstacle_factor*obstacle_force[1])
+        decision = (baorder_factor*border_force[1]) + (obstacle_factor*obstacle_force[1]) - (coin_factor*coin_force[1])
         
         # Debug forces
 
@@ -252,13 +268,14 @@ class Force2AI(BotAI):
                 data = json.load(json_file)
                 force_baorder_factor = data.get("force_boarder_factor", 0.0)
                 force_obstacle_factor = data.get("force_obstacle_factor", 0.0)
+                force_coin_factor = data.get("force_coin_factor", 0.0)
 
                 force_position_factor_xy = data.get("force_position_factor_xy", 1)
                 
 
-            self._suggest_fly(current_game_state, force_baorder_factor, force_obstacle_factor, force_position_factor_xy)
-        except:
-            print("Skipping fly suggestion")
+            self._suggest_fly(current_game_state, force_baorder_factor, force_obstacle_factor, force_coin_factor, force_position_factor_xy)
+        except Exception as  e:
+            print(f"Skipping fly suggestion: {e}")
 
         return self.fly
 

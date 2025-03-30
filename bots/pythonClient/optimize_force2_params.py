@@ -5,20 +5,18 @@ import os
 from datetime import datetime
 import statistics
 
-BF = 0.5
-CF = 0.0
+
 # Define the objective function for Optuna
 def objective(trial):
     # Suggest values for the parameters
     boarder_factor = trial.suggest_float("boarder_factor", 0.0, 0.5)
-    #boarder_factor = BF
     obstacle_factor = trial.suggest_float("obstacle_factor", 0.1, 2.0)
+    coin_factor = trial.suggest_float("coin_factor", 0.1, 2.0)
     position_factor_xy = trial.suggest_float("position_factor_xy", 0.0, 1.0)
 
-    coin_factor = CF
 
     # Set the parameters in the system
-    data = {"force_boarder_factor": boarder_factor,"force_obstacle_factor":obstacle_factor,"force_position_factor_xy":position_factor_xy}
+    data = {"force_boarder_factor": boarder_factor,"force_obstacle_factor":obstacle_factor,"force_coin_factor":coin_factor,"force_position_factor_xy":position_factor_xy}
     with open(f"force2_params.json", "w") as json_file:
         json.dump(data, json_file, indent=4)
 
@@ -62,14 +60,14 @@ study = optuna.create_study(direction="maximize", storage="sqlite:///db.sqlite3"
 
 # Start the optimization process
 print("Start with optimizing...")
-study.optimize(objective, n_trials=20)  # Run 50 trials
+study.optimize(objective, n_trials=30)  # Run n trials
 
 # Print the best parameters after optimization
 print(f"Optimization completed. Best parameters: {study.best_params}")
 print(f"Best score: {-study.best_value}")  # Negate the value to get the actual score
 
 # Apply the best parameters to the system
-data = {"force_boarder_factor": study.best_params["boarder_factor"],"force_obstacle_factor":study.best_params["obstacle_factor"],"force_position_factor_xy":study.best_params["position_factor_xy"]}
+data = {"force_boarder_factor": study.best_params["boarder_factor"],"force_obstacle_factor":study.best_params["obstacle_factor"],"force_coin_factor":study.best_params["coin_factor"],"force_position_factor_xy":study.best_params["position_factor_xy"]}
 with open(f"force_params.json", "w") as json_file:
     json.dump(data, json_file, indent=4)
 
