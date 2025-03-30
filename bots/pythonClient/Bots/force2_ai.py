@@ -2,6 +2,7 @@
 import pyqtgraph as pg
 import numpy as np
 import json
+import copy
 
 from Bots.bot_ai import BotAI
 from Bots.data import PlayState
@@ -27,6 +28,10 @@ class Force2AI(BotAI):
     obstacles_force_inf_position_scatter = pg.ScatterPlotItem(pen=None, symbol='x', size=20, brush='#FF0000FF')
     BotAI.plot.addItem(obstacles_force_inf_position_scatter)
     BotAI.legend.addItem(obstacles_force_inf_position_scatter, "Obstacles with force influance")
+
+    obstacles_art_obs_position_scatter = pg.ScatterPlotItem(pen=None, symbol='o', size=10, brush='#48F3FFFF')
+    BotAI.plot.addItem(obstacles_art_obs_position_scatter)
+    BotAI.legend.addItem(obstacles_art_obs_position_scatter, "Artificals")
 
 
     def _update_line(self, line_obj, start, direction):
@@ -125,8 +130,106 @@ class Force2AI(BotAI):
 
         return obstacle_force	
 
+    def _add_artifica_obstacles(self, current_game_state: PlayState):
+        
+        artificials = []
+
+        # add the arrow
+        for obstacle in current_game_state.obstacles[:]:
+            if obstacle.type == "Seagull" or obstacle.type == "Raven":
+                
+                ## add the arrow
+                ## up
+                #obstacle_up = copy.deepcopy(obstacle)
+                #obstacle_up.origin_y = obstacle_up.origin_y + (obstacle_up.height/2)
+                #obstacle_up.origin_x = obstacle_up.origin_x + (obstacle_up.width/2)
+                #current_game_state.obstacles.append(obstacle_up)
+                #artificials.append({'pos': (obstacle_up.origin_x, obstacle_up.origin_y)}) # viz
+                ## low
+                #obstacle_low = copy.deepcopy(obstacle)
+                #obstacle_low.origin_y = obstacle_low.origin_y - (obstacle_low.height/2)
+                #obstacle_low.origin_x = obstacle_low.origin_x + (obstacle_low.width/2)
+                #current_game_state.obstacles.append(obstacle_low)
+                #artificials.append({'pos': (obstacle_low.origin_x, obstacle_low.origin_y)}) # viz
+
+                # boarder artificals
+                #print(obstacle.origin_y)
+                if obstacle.origin_y > 410:
+                    ## frontal1
+                    #obstacle_f1 = copy.deepcopy(obstacle)
+                    #obstacle_f1.origin_y = obstacle_f1.origin_y + (obstacle_f1.height)
+                    #obstacle_f1.origin_x = obstacle_f1.origin_x - (obstacle_f1.width/2)
+                    #current_game_state.obstacles.append(obstacle_f1)
+                    #artificials.append({'pos': (obstacle_f1.origin_x, obstacle_f1.origin_y)}) # viz
+
+                    # frontal2
+                    obstacle_f2 = copy.deepcopy(obstacle)
+                    obstacle_f2.origin_y = 520
+                    obstacle_f2.origin_x = obstacle_f2.origin_x - (obstacle_f2.width*1.5)
+                    current_game_state.obstacles.append(obstacle_f2)
+                    artificials.append({'pos': (obstacle_f2.origin_x, obstacle_f2.origin_y)}) # viz
+
+                    ## frontal3
+                    #obstacle_f3 = copy.deepcopy(obstacle)
+                    #obstacle_f3.origin_y = 550
+                    #obstacle_f3.origin_x = obstacle_f3.origin_x - (obstacle_f3.width*2)
+                    #current_game_state.obstacles.append(obstacle_f3)
+                    #artificials.append({'pos': (obstacle_f3.origin_x, obstacle_f3.origin_y)}) # viz
+
+                    # frontal4
+                    obstacle_f4 = copy.deepcopy(obstacle)
+                    obstacle_f4.origin_y = 550
+                    obstacle_f4.origin_x = obstacle_f4.origin_x - (obstacle_f4.width*2.4)
+                    current_game_state.obstacles.append(obstacle_f4)
+                    artificials.append({'pos': (obstacle_f4.origin_x, obstacle_f4.origin_y)}) # viz
+                    
+
+                if obstacle.origin_y < 90:
+                    ## frontal1
+                    #obstacle_f1 = copy.deepcopy(obstacle)
+                    #obstacle_f1.origin_y = obstacle_f1.origin_y - (obstacle_f1.height)
+                    #obstacle_f1.origin_x = obstacle_f1.origin_x - (obstacle_f1.width/2)
+                    #current_game_state.obstacles.append(obstacle_f1)
+                    #artificials.append({'pos': (obstacle_f1.origin_x, obstacle_f1.origin_y)}) # viz
+
+                    # frontal2
+                    obstacle_f2 = copy.deepcopy(obstacle)
+                    obstacle_f2.origin_y = -35
+                    obstacle_f2.origin_x = obstacle_f2.origin_x - (obstacle_f2.width*1.5)
+                    current_game_state.obstacles.append(obstacle_f2)
+                    artificials.append({'pos': (obstacle_f2.origin_x, obstacle_f2.origin_y)}) # viz
+
+                    ## frontal3
+                    #obstacle_f3 = copy.deepcopy(obstacle)
+                    #obstacle_f3.origin_y = -85
+                    #obstacle_f3.origin_x = obstacle_f3.origin_x - (obstacle_f3.width*2)
+                    #current_game_state.obstacles.append(obstacle_f3)
+                    #artificials.append({'pos': (obstacle_f3.origin_x, obstacle_f3.origin_y)}) # viz
+
+                    # frontal4
+                    obstacle_f4 = copy.deepcopy(obstacle)
+                    obstacle_f4.origin_y = -55
+                    obstacle_f4.origin_x = obstacle_f4.origin_x - (obstacle_f4.width*2.4)
+                    current_game_state.obstacles.append(obstacle_f4)
+                    artificials.append({'pos': (obstacle_f4.origin_x, obstacle_f4.origin_y)}) # viz
+
+
+
+                #print(f"({obstacle.origin_x}|{obstacle.origin_y})({obstacle_up.origin_x}|{obstacle_up.origin_y})")
+                # viz
+                
+
+
+        self.obstacles_art_obs_position_scatter.setData(artificials)
+                
+        return current_game_state
+    
+
     def _suggest_fly(self, current_game_state: PlayState, baorder_factor, obstacle_factor, force_position_factor_xy):
         
+        # Add some artifical Obstacles
+        current_game_state = self._add_artifica_obstacles(current_game_state)
+
         # Calculate forces
         border_force = self._calc_border_force(current_game_state)
         obstacle_force = self._calc_obstacle_force(current_game_state, force_position_factor_xy)
