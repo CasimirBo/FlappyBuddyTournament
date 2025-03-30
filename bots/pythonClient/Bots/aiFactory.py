@@ -4,13 +4,15 @@ from Bots.up_ai import UpAI
 from Bots.down_ai import DownAI
 from Bots.collision_avoidance import ColAvoidAI
 from Bots.force_ai import ForceAI
+from Bots.force2_ai import Force2AI
 
 ai_bots = {
     "FirstAI": FirstAI,
     "UpAI": UpAI,
     "DownAI": DownAI,
     "ColAvoidAI": ColAvoidAI,
-    "ForceAI": ForceAI
+    "ForceAI": ForceAI,
+    "Force2AI": Force2AI
 }
 
 

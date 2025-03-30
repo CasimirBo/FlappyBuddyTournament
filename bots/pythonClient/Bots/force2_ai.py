@@ -1,0 +1,169 @@
+
+import pyqtgraph as pg
+import numpy as np
+import json
+
+from Bots.bot_ai import BotAI
+from Bots.data import PlayState
+
+# gloabl parameters to optimize
+force_baorder_factor = 2
+force_obstacle_factor = 1
+force_coin_factor = 0.2
+
+
+
+
+class Force2AI(BotAI):
+
+    fly = True
+
+    ylimit = 768
+    xlimit= 512
+
+    _debug_viz_border_force = None
+    _debug_viz_obstacle_force = None
+
+    obstacles_force_inf_position_scatter = pg.ScatterPlotItem(pen=None, symbol='x', size=20, brush='#FF0000FF')
+    BotAI.plot.addItem(obstacles_force_inf_position_scatter)
+    BotAI.legend.addItem(obstacles_force_inf_position_scatter, "Obstacles with force influance")
+
+
+    def _update_line(self, line_obj, start, direction):
+
+        x0, y0 = start
+        x_direction, y_direction = direction
+        x1 = x0 + x_direction
+        y1 = y0 + y_direction
+
+        if line_obj is not None:
+            line_obj.setData([x0, x1], [y0, y1])
+            return line_obj
+        else:
+            # Otherwise, create a new line object.
+            line_obj = BotAI.plot.plot([x0, x1], [y0, y1], pen=pg.mkPen(color="w", width=2))
+            BotAI.legend.addItem(line_obj, "Nearest Coin")
+        return line_obj
+
+    def _calc_border_force(self, current_game_state: PlayState):
+        
+        # calculate forces 
+        upper_ref = 0
+        lower_ref = self.xlimit
+
+        upper_force = np.array([0,(lower_ref/(current_game_state.player.pos_y - upper_ref))])
+        lower_force = np.array([0,(lower_ref/(current_game_state.player.pos_y - lower_ref))])
+       
+        border_force = upper_force + lower_force
+
+        # debugging
+        self._debug_viz_border_force = self._update_line(self._debug_viz_border_force, (0-20,200), border_force)     #boarder force
+
+        return border_force	
+
+    def _calc_obstacle_force(self, current_game_state: PlayState, force_position_factor_xy):
+
+        obstacles_with_force_influance = [] # for debug
+
+        obstacle_positions = []
+        obstacle_forces = []
+    
+        for obstacle in current_game_state.obstacles:
+            if obstacle.type == "Seagull" or obstacle.type == "Raven":
+                x_diff = current_game_state.player.pos_x-obstacle.origin_x
+                y_diff = current_game_state.player.pos_y-obstacle.origin_y
+                if (x_diff) < 50: # we do not take anything into account, that we passed already
+                    obstacles_with_force_influance.append({'pos': (obstacle.origin_x, obstacle.origin_y)}) # for debug
+                    if x_diff == 0 and y_diff == 0:
+                        obstacle_forces.append(np.array([0,0]))
+                    elif y_diff == 0:
+                        obstacle_forces.append(np.array([0, 0]))
+                    else:
+                        obstacle_forces.append(np.array( [0,(self.ylimit/y_diff)]  ) )
+
+                    obstacle_positions.append(np.array([(obstacle.origin_x),(obstacle.origin_y)]))
+
+        self.obstacles_force_inf_position_scatter.setData(obstacles_with_force_influance)
+
+        if obstacle_forces:  # Ensure the list is not empty
+            # forces und positions gewichten basierend auf abstand:
+
+            obstacle_positions_corrected = []
+
+            for index, p in enumerate(obstacle_positions):
+                x_diff = current_game_state.player.pos_x - p[0]
+                y_diff = current_game_state.player.pos_y - p[1]
+                
+                # Calculate the inverse of the distance as the factor
+                distance = abs(x_diff)*force_position_factor_xy + abs(y_diff)*(1-force_position_factor_xy)
+                if distance != 0:
+                    factor = self.xlimit / distance  # the closer the obstacle, the higher the factor
+                else:
+                    factor = self.xlimit  # if the player and obstacle are at the same position, no change
+                
+                # Scale the obstacle's position by the factor but maintain the original scale
+                p_fac = (
+                    p[0] * factor,  # Adjust the x-position based on the factor
+                    p[1] * factor   # Adjust the y-position based on the factor
+                )
+
+                #print(factor)
+                obstacle_forces[index][0] = obstacle_forces[index][0]*factor
+                obstacle_forces[index][1] = obstacle_forces[index][1]*factor
+                
+
+                obstacle_positions_corrected.append(p_fac)
+
+            obstacle_force = np.median(np.array(obstacle_forces), axis=0)
+
+            obstacle_position = np.median(np.array(obstacle_positions_corrected), axis=0)
+        else:
+            obstacle_force = np.array([0, 0])  # Fallback if list is empty
+            obstacle_position = np.array([0, 0])  # Fallback if list is empty
+
+        self._debug_viz_obstacle_force = self._update_line(self._debug_viz_obstacle_force, (100,200), obstacle_force)     #obstacle force
+
+        return obstacle_force	
+
+    def _suggest_fly(self, current_game_state: PlayState, baorder_factor, obstacle_factor, force_position_factor_xy):
+        
+        # Calculate forces
+        border_force = self._calc_border_force(current_game_state)
+        obstacle_force = self._calc_obstacle_force(current_game_state, force_position_factor_xy)
+
+        decision = (baorder_factor*border_force[1]) + (obstacle_factor*obstacle_force[1])
+        
+        # Debug forces
+
+        # Derive fly from force
+        if decision > 0:
+            self.fly = False
+        else:
+            self.fly = True
+
+
+    def _play_impl(self, current_game_state: PlayState):
+        
+        try:
+            with open("./force2_params.json", "r") as json_file:
+                data = json.load(json_file)
+                force_baorder_factor = data.get("force_boarder_factor", 0.0)
+                force_obstacle_factor = data.get("force_obstacle_factor", 0.0)
+
+                force_position_factor_xy = data.get("force_position_factor_xy", 1)
+                
+
+            self._suggest_fly(current_game_state, force_baorder_factor, force_obstacle_factor, force_position_factor_xy)
+        except:
+            print("Skipping fly suggestion")
+
+        return self.fly
+
+    def get_name(self):
+        return self.name
+
+    def __init__(self):
+        # todo: give your bot a super duper cool name
+        self.name = "Force2"
+
+
