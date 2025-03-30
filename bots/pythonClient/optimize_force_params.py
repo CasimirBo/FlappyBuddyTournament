@@ -54,7 +54,7 @@ print(f"Best score: {-study.best_value}")  # Negate the value to get the actual 
 # Apply the best parameters to the system
 #data = {"force_baorder_factor": study.best_params["boarder_factor"],"force_obstacle_factor":study.best_params["obstacle_factor"],"force_coin_factor":study.best_params["coin_factor"]}
 data = {"force_baorder_factor": BF,"force_obstacle_factor":study.best_params["obstacle_factor"],"force_coin_factor":CF}
-with open(f"force_params.json", "w") as json_file:
+with open(f"force2_params.json", "w") as json_file:
     json.dump(data, json_file, indent=4)
 
 

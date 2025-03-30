@@ -1,5 +1,6 @@
 {
-    "force_boarder_factor": 0.2420356529300146,
-    "force_obstacle_factor": 1.9620685598094036,
-    "force_position_factor_xy": 0.5468337531592559
+    "force_boarder_factor": 0.5,
+    "force_obstacle_factor": 1.6518051367451294,
+    "force_coin_factor": 0,
+    "force_position_factor_xy": 0.629798962829338
 }

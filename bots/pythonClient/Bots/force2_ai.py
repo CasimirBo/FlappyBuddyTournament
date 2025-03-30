@@ -3,6 +3,7 @@ import pyqtgraph as pg
 import numpy as np
 import json
 import copy
+import math
 
 from Bots.bot_ai import BotAI
 from Bots.data import PlayState
@@ -82,7 +83,8 @@ class Force2AI(BotAI):
             if obstacle.type == "Seagull" or obstacle.type == "Raven":
                 x_diff = current_game_state.player.pos_x-obstacle.origin_x
                 y_diff = current_game_state.player.pos_y-obstacle.origin_y
-                if (x_diff) < 50: # we do not take anything into account, that we passed already
+                #print(x_diff)
+                if (x_diff) < 90: # we do not take anything into account, that we passed already
                     obstacles_with_force_influance.append({'pos': (obstacle.origin_x, obstacle.origin_y)}) # for debug
                     if x_diff == 0 and y_diff == 0:
                         obstacle_forces.append(np.array([0,0]))
@@ -250,7 +252,34 @@ class Force2AI(BotAI):
         obstacle_force = self._calc_obstacle_force(current_game_state, force_position_factor_xy)
         coin_force = self._calc_coin_force(current_game_state)
 
-        decision = (baorder_factor*border_force[1]) + (obstacle_factor*obstacle_force[1]) - (coin_factor*coin_force[1])
+        # Fuzzylogic for force combinations:
+
+        obs = 0
+        nearest_obstacle_dist = 100000
+        for o in current_game_state.obstacles:
+            if o.type == "Seagull" or o.type == "Raven":
+                obs = obs + 1
+
+                x_diff = abs(o.origin_x-current_game_state.player.pos_x)
+                y_diff = abs(o.origin_y-current_game_state.player.pos_y)
+                distance = math.sqrt(x_diff*x_diff + y_diff*y_diff)
+
+                if distance < nearest_obstacle_dist:
+                    nearest_obstacle_dist = distance
+
+        #print(nearest_obstacle_dist)
+        if obs == 0:
+            #print(f"Number of obstacles: {obs} and nearest obstcale: {nearest_obstacle_dist} -> We follow the coin...")
+            decision = - coin_force[1]
+        else:
+            if nearest_obstacle_dist > 500:
+                #print(f"Number of obstacles: {obs} and nearest obstcale: {nearest_obstacle_dist}  -> Follow the coins...")
+                decision = - coin_force[1]
+            else:
+                #print(f"Number of obstacles: {obs} and nearest obstcale: {nearest_obstacle_dist}  -> No coins anymore for us. It is to dangerous...")
+                decision = (baorder_factor*border_force[1]) + (obstacle_factor*obstacle_force[1])
+
+        
         
         # Debug forces
 
