@@ -1,5 +1,5 @@
 {
     "force_baorder_factor": 0.5,
-    "force_obstacle_factor": 1.3,
-    "force_coin_factor": 0.1
+    "force_obstacle_factor": 1.369391387045432,
+    "force_coin_factor": 0.0
 }

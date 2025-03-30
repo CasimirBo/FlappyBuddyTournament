@@ -2,14 +2,18 @@ import time
 import json
 import optuna
 from datetime import datetime
+import statistics
 
+BF = 0.5
+CF = 0.0
 # Define the objective function for Optuna
 def objective(trial):
     # Suggest values for the parameters
     #boarder_factor = trial.suggest_float("boarder_factor", 0.1, 1.0)
-    boarder_factor = 0.5
+    boarder_factor = BF
     obstacle_factor = trial.suggest_float("obstacle_factor", 0.5, 2.0)
-    coin_factor = trial.suggest_float("coin_factor", 0.0, 2.0)
+    #coin_factor = trial.suggest_float("coin_factor", 0.0, 2.0)
+    coin_factor = CF
 
     # Set the parameters in the system
     data = {"force_baorder_factor": boarder_factor,"force_obstacle_factor":obstacle_factor,"force_coin_factor":coin_factor}
@@ -17,16 +21,22 @@ def objective(trial):
         json.dump(data, json_file, indent=4)
 
     # Wait for the system to stabilize (simulate processing time)
-    time.sleep(30)  # Simulate a delay for the system to process changes
 
-    # Read in new score 
-    with open("./current_Score.json", "r") as json_file:
-        data = json.load(json_file)
-        play_scores = data.get("play_scores", 0)
-        play_time = data.get("play_time", 0)
+    scores = []
+    for i in range(1,10):
+        time.sleep(30)  # Simulate a delay for the system to process changes
 
+        # Read in new score 
+        with open("./current_Score.json", "r") as json_file:
+            data = json.load(json_file)
+            play_scores = data.get("play_scores", 0)
+            play_time = data.get("play_time", 0)
+            scores.append(play_time)
+
+    score = statistics.mean(scores)
+    print(score, scores)
     # Return the negative of the score (since Optuna minimizes by default)
-    return play_time
+    return score
 
 # Create an Optuna study
 start_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
@@ -42,7 +52,8 @@ print(f"Optimization completed. Best parameters: {study.best_params}")
 print(f"Best score: {-study.best_value}")  # Negate the value to get the actual score
 
 # Apply the best parameters to the system
-data = {"force_baorder_factor": study.best_params["boarder_factor"],"force_obstacle_factor":study.best_params["obstacle_factor"],"force_coin_factor":study.best_params["coin_factor"]}
+#data = {"force_baorder_factor": study.best_params["boarder_factor"],"force_obstacle_factor":study.best_params["obstacle_factor"],"force_coin_factor":study.best_params["coin_factor"]}
+data = {"force_baorder_factor": BF,"force_obstacle_factor":study.best_params["obstacle_factor"],"force_coin_factor":CF}
 with open(f"force_params.json", "w") as json_file:
     json.dump(data, json_file, indent=4)
 
