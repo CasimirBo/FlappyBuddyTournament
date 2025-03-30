@@ -16,3 +16,4 @@ bots/pythonClient/poetry.lock
 bots/pythonClient/data
 bots/pythonClient/Bots/bot_ai.py
 bots/pythonClient/current_Score.json
+bots/pythonClient/

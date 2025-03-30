@@ -64,6 +64,31 @@ class BotAI(ABC):
         with open(f"current_Score.json", "w") as json_file:
             json.dump(data, json_file, indent=4)
 
+        # v2
+        with open("./opt_data/folder_info.json", "r") as json_file:
+            data = json.load(json_file)
+            v2_output_file = data.get("output_file", 0.0)
+
+        if os.path.exists(v2_output_file):
+            with open(v2_output_file, "r") as json_file:
+                data_scores = json.load(json_file)
+                v2_scores = data_scores.get("scores", [])
+                v2_times = data_scores.get("times", [])
+        else:
+            v2_scores = []
+            v2_times = []
+
+        v2_scores.append(current_score)
+        v2_times.append(level_time)
+
+        output_dir = os.path.dirname(v2_output_file)
+        os.makedirs(output_dir, exist_ok=True)  # This creates the necessary folders if they don't exist
+
+        # Write the updated scores back to the file
+        with open(v2_output_file, "w") as json_file:
+            # You might want to structure the data more than just appending to `scores`
+            json.dump({"scores": v2_scores,"times":v2_times}, json_file, indent=4)
+
     def visualize_positions(self, current_game_state: PlayState):
 
         # Update Player position
@@ -97,7 +122,7 @@ class BotAI(ABC):
         if current_game_state.player.state == "died":
             print(f"Level finished. Score of {0} was added to list.")
             self.play_scores.append({"score":0,"player_state":current_game_state.player.state})
-            self.dump_scores_to_json(current_game_state.score, current_game_state.level_time)
+            self.dump_scores_to_json(0, current_game_state.level_time)
 
         # Call the specific implementation of play
         fly = self._play_impl(current_game_state)
