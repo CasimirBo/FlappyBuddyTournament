@@ -5,6 +5,7 @@ from Bots.down_ai import DownAI
 from Bots.collision_avoidance import ColAvoidAI
 from Bots.force_ai import ForceAI
 from Bots.force2_ai import Force2AI
+from Bots.ray_ai import Ray_AI
 
 ai_bots = {
     "FirstAI": FirstAI,
@@ -12,7 +13,8 @@ ai_bots = {
     "DownAI": DownAI,
     "ColAvoidAI": ColAvoidAI,
     "ForceAI": ForceAI,
-    "Force2AI": Force2AI
+    "Force2AI": Force2AI,
+    "Ray_AI": Ray_AI
 }
 
 
