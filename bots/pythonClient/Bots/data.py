@@ -47,7 +47,7 @@ class PlayState(FromServerPacket):
     score: float
     player: Player
     obstacles: List[Obstacle]
-
+    #test comment
     @staticmethod
     def from_dict(data: dict) -> PlayState:
         obstacles = [Obstacle.from_dict(entry) for entry in data['obstacles']]
